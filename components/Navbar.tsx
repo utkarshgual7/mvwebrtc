@@ -12,7 +12,7 @@ const Navbar = () => {
           src="/icons/Connectvice.svg"
           width={80}
           height={60}
-          alt="yoom logo"
+          alt="logo"
           className="max-sm:size-10"
         />
          <p className="text-[26px] font-extrabold text-white">ConnectVice</p>
