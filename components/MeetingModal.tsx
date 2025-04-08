@@ -5,18 +5,33 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import Image from "next/image";
 
+// interface MeetingModalProps {
+//   isOpen: boolean;
+//   onClose: () => void;
+//   title: string;
+//   className?: string;
+//   children?: ReactNode;
+//   handleClick?: () => void;
+//   buttonText?: string;
+//   instantMeeting?: boolean;
+//   image?: string;
+//   buttonClassName?: string;
+//   buttonIcon?: string;
+// }
+
 interface MeetingModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  className?: string;
-  children?: ReactNode;
+  isOpen?: boolean;
+  onClose?: () => void;
+  title?: string;
+  children?: React.ReactNode;
   handleClick?: () => void;
   buttonText?: string;
-  instantMeeting?: boolean;
-  image?: string;
-  buttonClassName?: string;
   buttonIcon?: string;
+  image?: string;
+  className?: string;
+  icon?: React.ReactNode;
+  instantMeeting?: boolean;
+
 }
 
 const MeetingModal = ({
@@ -29,7 +44,6 @@ const MeetingModal = ({
   buttonText,
   instantMeeting,
   image,
-  buttonClassName,
   buttonIcon,
 }: MeetingModalProps) => {
   return (
