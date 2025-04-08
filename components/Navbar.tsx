@@ -16,7 +16,7 @@ const Navbar = () => {
           className="max-sm:size-10"
         />
          <p className="text-[26px] font-extrabold text-white">ConnectVice</p>
-            <p className="text-[10px] font-thin text-white max-sm:text-[5px]">Tool from MachineVice</p>
+            <p className="text-[10px] font-thin text-white max-sm:text-[5px]">Tool by Mecverse</p>
       </Link>
       <div className="flex-between gap-5">
         <SignedIn>
