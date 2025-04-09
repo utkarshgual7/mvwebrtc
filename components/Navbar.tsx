@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { SignedIn, UserButton } from '@clerk/nextjs';
+// import { SignedIn, UserButton } from '@clerk/nextjs';
 
 import MobileNav from './MobileNav';
 
@@ -19,9 +19,9 @@ const Navbar = () => {
             <p className="text-[10px] font-thin text-white max-sm:text-[5px]">Tool by Mecverse</p>
       </Link>
       <div className="flex-between gap-5">
-        <SignedIn>
-          <UserButton afterSignOutUrl="/sign-in" />
-        </SignedIn>
+        {/* <SignedIn> */}
+          {/* <UserButton afterSignOutUrl="/sign-in" /> */}
+        {/* </SignedIn> */}
 
         <MobileNav />
       </div>
