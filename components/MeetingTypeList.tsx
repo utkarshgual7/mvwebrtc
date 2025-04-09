@@ -247,13 +247,14 @@ import MeetingModal from './MeetingModal';
 import { Textarea } from './ui/textarea';
 import ReactDatePicker from 'react-datepicker';
 import { useToast } from './ui/use-toast';
-import { Call, useStreamVideoClient } from '@stream-io/video-react-sdk';
+import { Call, name, useStreamVideoClient } from '@stream-io/video-react-sdk';
 import { Input } from './ui/input';
 
 const initialValues = {
   dateTime: new Date(),
   description: '',
   link: '',
+  name : '' , 
 };
 
 const MeetingTypeList = () => {
@@ -281,11 +282,45 @@ const MeetingTypeList = () => {
     show: { y: 0, opacity: 1 },
   };
 
+  // const createMeeting = async () => {
+  //   if (!client) return;
+  //   try {
+  //     if (!values.dateTime) {
+  //       toast({ title: 'Please select a date and time' });
+  //       return;
+  //     }
+  //     const id = crypto.randomUUID();
+  //     const call = client.call('default', id);
+  //     if (!call) throw new Error('Failed to create meeting');
+  //     const startsAt =
+  //       values.dateTime.toISOString() || new Date(Date.now()).toISOString();
+  //     const description = values.description || 'Instant Meeting';
+  //     await call.getOrCreate({
+  //       data: {
+  //         starts_at: startsAt,
+  //         custom: {
+  //           description,
+  //         },
+  //       },
+  //     });
+  //     setCallDetail(call);
+  //     if (!values.description) {
+  //       router.push(`/meeting/${call.id}`);
+  //     }
+  //     toast({
+  //       title: 'Meeting Created',
+  //     });
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast({ title: 'Failed to create Meeting' });
+  //   }
+  // };
+
   const createMeeting = async () => {
     if (!client) return;
     try {
-      if (!values.dateTime) {
-        toast({ title: 'Please select a date and time' });
+      if (!values.name.trim()) {
+        toast({ title: 'Please enter your name' });
         return;
       }
       const id = crypto.randomUUID();
@@ -299,12 +334,13 @@ const MeetingTypeList = () => {
           starts_at: startsAt,
           custom: {
             description,
+            user_name: values.name,
           },
         },
       });
       setCallDetail(call);
       if (!values.description) {
-        router.push(`/meeting/${call.id}`);
+        router.push(`/meeting/${call.id}?name=${encodeURIComponent(values.name)}`);
       }
       toast({
         title: 'Meeting Created',
@@ -423,7 +459,7 @@ const MeetingTypeList = () => {
         )}
 
         {/* Join Meeting Modal */}
-        {meetingState === 'isJoiningMeeting' && (
+        {/* {meetingState === 'isJoiningMeeting' && (
           <MeetingModal
             isOpen={true}
             onClose={() => setMeetingState(undefined)}
@@ -438,10 +474,38 @@ const MeetingTypeList = () => {
               className="border-none bg-dark-3 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </MeetingModal>
-        )}
+        )} */}
+
+{meetingState === 'isInstantMeeting' && (
+    <MeetingModal
+      isOpen={true}
+      onClose={() => setMeetingState(undefined)}
+      title="Start an Instant Meeting"
+      className="text-center"
+      buttonText="Start Meeting"
+      handleClick={createMeeting}
+    >
+      <div className="space-y-4">
+        <div className="flex flex-col gap-2.5">
+          <label className="text-base font-normal leading-[22.4px] text-sky-2">
+            Enter your name
+          </label>
+          <Input
+            type="text"
+            placeholder="Your name"
+            value={values.name}
+            onChange={(e) => setValues({ ...values, name: e.target.value })}
+            className="border-none bg-dark-3 focus-visible:ring-0 focus-visible:ring-offset-0"
+            required
+          />
+        </div>
+      </div>
+    </MeetingModal>
+  )}
+
 
         {/* Instant Meeting Modal */}
-        {meetingState === 'isInstantMeeting' && (
+        {/* {meetingState === 'isInstantMeeting' && (
           <MeetingModal
             isOpen={true}
             onClose={() => setMeetingState(undefined)}
@@ -450,7 +514,53 @@ const MeetingTypeList = () => {
             buttonText="Start Meeting"
             handleClick={createMeeting}
           />
-        )}
+        )} */}
+
+// In the Join Meeting Modal section:
+{meetingState === 'isJoiningMeeting' && (
+  <MeetingModal
+    isOpen={true}
+    onClose={() => setMeetingState(undefined)}
+    title="Join Meeting"
+    className="text-center"
+    buttonText="Join Meeting"
+    handleClick={() => {
+      if (!values.name.trim()) {
+        toast({ title: 'Please enter your name' });
+        return;
+      }
+      router.push(`${values.link}?name=${encodeURIComponent(values.name)}`);
+    }}
+  >
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2.5">
+        <label className="text-base font-normal leading-[22.4px] text-sky-2">
+          Enter your name
+        </label>
+        <Input
+          type="text"
+          placeholder="Your name"
+          value={values.name}
+          onChange={(e) => setValues({ ...values, name: e.target.value })}
+          className="border-none bg-dark-3 focus-visible:ring-0 focus-visible:ring-offset-0"
+          required
+        />
+      </div>
+      <div className="flex flex-col gap-2.5">
+        <label className="text-base font-normal leading-[22.4px] text-sky-2">
+          Meeting Link
+        </label>
+        <Input
+          placeholder="Meeting link"
+          value={values.link}
+          onChange={(e) => setValues({ ...values, link: e.target.value })}
+          className="border-none bg-dark-3 focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+      </div>
+    </div>
+  </MeetingModal>
+)}
+
       </AnimatePresence>
     </motion.section>
   );
