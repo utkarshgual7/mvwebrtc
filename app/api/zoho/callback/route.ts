@@ -54,12 +54,12 @@ if (tokenData.refresh_token) {
   });
 }
 
-return response;
+
 
     // Store tokens securely (implement your storage solution)
     // For demo purposes, we'll redirect with a success message
     return NextResponse.redirect(
-      `${request.nextUrl.origin}/meeting?zoho=success`
+      `/zoho/success`
     );
   } catch (error) {
     console.error('Token exchange error:', error);
