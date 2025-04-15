@@ -53,9 +53,6 @@ if (tokenData.refresh_token) {
     sameSite: 'lax'
   });
 }
-
-
-
     // Store tokens securely (implement your storage solution)
     // For demo purposes, we'll redirect with a success message
     return NextResponse.redirect(
