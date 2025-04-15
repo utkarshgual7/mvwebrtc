@@ -38,7 +38,7 @@ const response = NextResponse.redirect(
 );
 
 // Set the access token in an HTTP-only cookie
-response.cookies.set('zoho_access_token', tokenData.access_token, {
+response.cookies.set('zoho_grant_token', tokenData.access_token, {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax',
