@@ -65,3 +65,37 @@ export async function generateZohoTokens(
 
   return response.json();
 }
+
+export type ZohoSessionType = 'rs' | 'dm';
+
+export interface ZohoSessionResponse {
+  session_id: string;
+  join_url: string;
+  status: string;
+}
+
+export async function createZohoSession(
+  accessToken: string,
+  customerEmail?: string,
+  type: ZohoSessionType = 'rs'
+): Promise<ZohoSessionResponse> {
+  const url = new URL('https://assist.zoho.com/api/v2/session');
+  
+  if (customerEmail) {
+    url.searchParams.append('customer_email', customerEmail);
+  }
+  url.searchParams.append('type', type);
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Authorization': `Zoho-oauthtoken ${accessToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to create Zoho session: ${response.statusText}`);
+  }
+
+  return response.json();
+}
