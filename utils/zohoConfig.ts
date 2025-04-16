@@ -18,7 +18,7 @@ export interface ZohoTokenResponse {
 }
 
 export const ZOHO_CONFIG = {
-  SCOPE: 'ZohoAssist.userapi.READ',
+  SCOPE: 'ZohoAssist.sessionapi.CREATE',
   CLIENT_ID: process.env.ZOHO_CLIENT_ID!,
   CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET!,
   REDIRECT_URI: process.env.ZOHO_REDIRECT_URI!

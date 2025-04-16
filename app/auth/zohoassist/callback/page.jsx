@@ -2,36 +2,71 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function Success() {
-  const [code, setCode] = useState("");
   const searchParams = useSearchParams();
+  const [code, setCode] = useState("");
+  const [email, setEmail] = useState("");
+  const [sessionType, setSessionType] = useState("rs");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const authCode = searchParams.get("code");
     if (authCode) {
-      // Set the code in cookies
-      document.cookie = `zoho_auth_code=${authCode}; path=/; max-age=3600`;
-      setCode(authCode);
+      // First exchange code for tokens
+      const exchangeToken = async () => {
+        try {
+          const response = await fetch('/api/zoho/callback', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              code: authCode,
+              location: 'IN'
+            }),
+          });
+
+          if (response.ok) {
+            // Close this window after successful token exchange
+            window.opener?.postMessage({ type: 'ZOHO_AUTH_SUCCESS' }, '*');
+            window.close();
+          }
+        } catch (error) {
+          console.error('Token exchange failed:', error);
+        }
+      };
+      exchangeToken();
     }
   }, [searchParams]);
 
-  if (!code) {
-    return <div className="p-8 text-center">No authorization code found</div>;
-  }
-
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-green-600 mb-4">
-        Success! Authorization Completed
-      </h1>
-      <div className="bg-gray-100 p-4 rounded-lg">
-        <h2 className="text-lg font-semibold mb-2">Your Authorization Code:</h2>
-        <code className="bg-gray-200 p-2 rounded block break-all">{code}</code>
-      </div>
-      <p className="mt-4 text-gray-600">
-        This code has been saved and will be used for API authentication.
-      </p>
+    <div className="min-h-screen flex items-center justify-center bg-dark-2 p-4">
+      <Card className="w-full max-w-md bg-dark-1 text-white border-none">
+        <CardHeader>
+          <CardTitle>Authenticating with Zoho...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center">
+            Please wait while we complete the authentication...
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
