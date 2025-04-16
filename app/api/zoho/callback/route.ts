@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        // Long expiration for refresh token
         maxAge: 60 * 60 * 24 * 30 // 30 days
       });
     }
@@ -55,8 +54,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { code, location } = await request.json();
+    console.log('Token Exchange Started:', { code: !!code, location });
 
     if (!code) {
+      console.log('Token Exchange Failed: No code provided');
       return NextResponse.json(
         { error: 'No authorization code provided' },
         { status: 400 }
@@ -64,16 +65,27 @@ export async function POST(request: NextRequest) {
     }
 
     const tokenData = await generateZohoTokens(code, location);
+    console.log('Token Generation Success:', {
+      hasAccessToken: !!tokenData.access_token,
+      hasRefreshToken: !!tokenData.refresh_token,
+      expiresIn: tokenData.expires_in
+    });
+    
+    // Create response
+    const response = NextResponse.json({ 
+      success: true,
+      accessToken: tokenData.access_token,
+      redirectUrl: '/meeting?zoho=success'
+    });
 
-    // Set cookies
-    const response = NextResponse.json({ success: true });
-
+    // Set cookies with appropriate settings
     response.cookies.set({
       name: 'zoho_access_token',
       value: tokenData.access_token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: tokenData.expires_in
     });
 
@@ -84,10 +96,12 @@ export async function POST(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30 // 30 days
       });
     }
 
+    console.log('Cookies Set Successfully');
     return response;
   } catch (error) {
     console.error('Token exchange error:', error);
