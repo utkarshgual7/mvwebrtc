@@ -1,13 +1,31 @@
+export const ZOHO_DOMAINS = {
+  US: 'https://accounts.zoho.com',
+  AU: 'https://accounts.zoho.com.au',
+  EU: 'https://accounts.zoho.eu',
+  IN: 'https://accounts.zoho.in',
+  CN: 'https://accounts.zoho.com.cn',
+  JP: 'https://accounts.zoho.jp'
+} as const;
+
+export type ZohoDomain = keyof typeof ZOHO_DOMAINS;
+
+export interface ZohoTokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  api_domain: string;
+  token_type: 'Bearer';
+}
+
 export const ZOHO_CONFIG = {
-  AUTH_URL: process.env.ZOHO_AUTH_URL || 'https://accounts.zoho.com/oauth/v2/auth',
-  TOKEN_URL: process.env.ZOHO_TOKEN_URL || 'https://accounts.zoho.com/oauth/v2/token',
   SCOPE: 'ZohoAssist.userapi.READ',
   CLIENT_ID: process.env.ZOHO_CLIENT_ID!,
   CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET!,
   REDIRECT_URI: process.env.ZOHO_REDIRECT_URI!
 };
 
-export function getZohoAuthUrl() {
+export function getZohoAuthUrl(domain: ZohoDomain = 'US') {
+  const authUrl = `${ZOHO_DOMAINS[domain]}/oauth/v2/auth`;
   const params = new URLSearchParams({
     scope: ZOHO_CONFIG.SCOPE,
     client_id: ZOHO_CONFIG.CLIENT_ID,
@@ -16,5 +34,34 @@ export function getZohoAuthUrl() {
     redirect_uri: ZOHO_CONFIG.REDIRECT_URI
   });
 
-  return `${ZOHO_CONFIG.AUTH_URL}?${params.toString()}`;
+  return `${authUrl}?${params.toString()}`;
+}
+
+export async function generateZohoTokens(
+  code: string,
+  domain: ZohoDomain = 'US'
+): Promise<ZohoTokenResponse> {
+  const tokenUrl = `${ZOHO_DOMAINS[domain]}/oauth/v2/token`;
+  
+  const formData = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: ZOHO_CONFIG.CLIENT_ID,
+    client_secret: ZOHO_CONFIG.CLIENT_SECRET,
+    redirect_uri: ZOHO_CONFIG.REDIRECT_URI,
+    code: code
+  });
+
+  const response = await fetch(tokenUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(`Token generation failed: ${response.statusText}`);
+  }
+
+  return response.json();
 }
