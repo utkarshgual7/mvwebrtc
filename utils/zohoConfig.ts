@@ -14,68 +14,87 @@ export interface ZohoTokenResponse {
   refresh_token: string;
   expires_in: number;
   api_domain: string;
-  token_type: 'Bearer';
+  token_type: string;
 }
 
 export const ZOHO_CONFIG = {
-  SCOPE: 'ZohoAssist.sessionapi.CREATE',
   CLIENT_ID: process.env.ZOHO_CLIENT_ID!,
   CLIENT_SECRET: process.env.ZOHO_CLIENT_SECRET!,
-  REDIRECT_URI: process.env.ZOHO_REDIRECT_URI!
+  REDIRECT_URI: process.env.ZOHO_REDIRECT_URI!,
+  SCOPES: ['ZohoAssist.sessionapi.CREATE']
 };
 
-export function getZohoAuthUrl(domain: ZohoDomain = 'US') {
-  const authUrl = `${ZOHO_DOMAINS[domain]}/oauth/v2/auth`;
+export function getZohoAuthUrl(domain: ZohoDomain = 'IN'): string {
+  const baseUrl = ZOHO_DOMAINS[domain];
   const params = new URLSearchParams({
-    scope: ZOHO_CONFIG.SCOPE,
-    client_id: ZOHO_CONFIG.CLIENT_ID,
     response_type: 'code',
-    access_type: 'online',
-    redirect_uri: ZOHO_CONFIG.REDIRECT_URI
+    client_id: ZOHO_CONFIG.CLIENT_ID,
+    scope: ZOHO_CONFIG.SCOPES.join(' '),
+    redirect_uri: ZOHO_CONFIG.REDIRECT_URI,
+    access_type: 'offline', // This is important for refresh token
+    prompt: 'consent'  // Force consent screen to get refresh token
   });
 
-  return `${authUrl}?${params.toString()}`;
+  return `${baseUrl}/oauth/v2/auth?${params.toString()}`;
 }
 
 export async function generateZohoTokens(
   code: string,
   location: string
 ): Promise<ZohoTokenResponse> {
-  // Convert location to proper domain key
   const domainKey = location.toUpperCase() as ZohoDomain;
   const baseUrl = ZOHO_DOMAINS[domainKey] || ZOHO_DOMAINS.IN;
   
   console.log('Token Generation Started:', {
     baseUrl,
     location,
-    code: code.substring(0, 15) + '...'
+    code: code.substring(0, 15) + '...',
+    clientId: ZOHO_CONFIG.CLIENT_ID,
+    redirectUri: ZOHO_CONFIG.REDIRECT_URI
   });
 
-  // Construct form data exactly as specified in docs
-  const formData = new URLSearchParams();
-  formData.append('grant_type', 'authorization_code');
-  formData.append('client_id', ZOHO_CONFIG.CLIENT_ID);
-  formData.append('client_secret', ZOHO_CONFIG.CLIENT_SECRET);
-  formData.append('redirect_uri', ZOHO_CONFIG.REDIRECT_URI);
-  formData.append('code', code);
+  // Create form data as specified in Zoho docs
+  const formData = new URLSearchParams({
+    code: code,
+    client_id: ZOHO_CONFIG.CLIENT_ID,
+    client_secret: ZOHO_CONFIG.CLIENT_SECRET,
+    redirect_uri: ZOHO_CONFIG.REDIRECT_URI,
+    grant_type: 'authorization_code',
+    scope: ZOHO_CONFIG.SCOPES.join(',')
+  });
 
   try {
     const response = await fetch(`${baseUrl}/oauth/v2/token`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
       },
       body: formData.toString()
     });
 
-    const data = await response.json();
-    
+    const responseText = await response.text();
+    console.log('Raw Token Response:', responseText);
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse token response:', e);
+      throw new Error('Invalid response format from Zoho');
+    }
+
     if (!response.ok) {
       console.error('Token Generation Failed:', {
         status: response.status,
         error: data
       });
       throw new Error(data.error || 'Failed to generate tokens');
+    }
+
+    // Validate required fields
+    if (!data.access_token) {
+      throw new Error('No access token in response');
     }
 
     console.log('Token Generation Success:', {
