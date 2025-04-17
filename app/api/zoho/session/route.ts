@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   const accessToken = request.cookies.get('zoho_access_token')?.value;
-  const refreshToken = request.cookies.get('zoho_refresh_token')?.value;
 
   console.log('Session Creation Attempt:', {
     hasAccessToken: !!accessToken,
-    hasRefreshToken: !!refreshToken
+    tokenPrefix: accessToken ? accessToken.substring(0, 15) + '...' : 'none'
   });
 
   if (!accessToken) {
@@ -19,11 +18,13 @@ export async function POST(request: NextRequest) {
   try {
     const { customerEmail, type } = await request.json();
 
-    const response = await fetch('https://assist.zoho.com/api/v2/session', {
+    // Create session directly
+    const response = await fetch('https://assist.zoho.in/api/v2/session', {
       method: 'POST',
       headers: {
         'Authorization': `Zoho-oauthtoken ${accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
         customer_email: customerEmail || '',
@@ -31,24 +32,34 @@ export async function POST(request: NextRequest) {
       })
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    console.log('Raw Session Response:', responseText);
+
+    let sessionData;
+    try {
+      sessionData = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse session response:', e);
+      throw new Error('Invalid response from Zoho API');
+    }
 
     if (!response.ok) {
       console.error('Session Creation Failed:', {
         status: response.status,
-        error: data
+        error: sessionData
       });
-      throw new Error(data.message || 'Failed to create session');
+      throw new Error(sessionData.error?.message || 'Failed to create session');
     }
 
     return NextResponse.json({
       success: true,
-      session: data
+      session: sessionData
     });
+
   } catch (error) {
     console.error('Session creation error:', error);
     return NextResponse.json(
-      { error: 'Failed to create session' },
+      { error: (error as Error).message || 'Failed to create session' },
       { status: 500 }
     );
   }
