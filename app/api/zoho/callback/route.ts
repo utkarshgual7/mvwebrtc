@@ -5,7 +5,9 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const domain = (searchParams.get('domain') as ZohoDomain) || 'US';
-
+ console.log("authentication code:", code, "domain:", domain);
+  console.log('Token Exchange Started:', { code: !!code, domain });
+  
   if (!code) {
     return NextResponse.json(
       { error: 'No authorization code provided' },
@@ -54,10 +56,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { code, location } = await request.json();
-    console.log('Token Exchange Started:', { code: !!code, location });
-
+    
     if (!code) {
-      console.log('Token Exchange Failed: No code provided');
       return NextResponse.json(
         { error: 'No authorization code provided' },
         { status: 400 }
@@ -65,20 +65,19 @@ export async function POST(request: NextRequest) {
     }
 
     const tokenData = await generateZohoTokens(code, location);
-    console.log('Token Generation Success:', {
-      hasAccessToken: !!tokenData.access_token,
-      hasRefreshToken: !!tokenData.refresh_token,
-      expiresIn: tokenData.expires_in
-    });
-    
-    // Create response
-    const response = NextResponse.json({ 
+
+    // Create response with redirectUrl
+    const response = NextResponse.json({
       success: true,
-      accessToken: tokenData.access_token,
-      redirectUrl: '/meeting?zoho=success'
+      redirectUrl: '/meeting?zoho=success',
+      tokens: {
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        expiresIn: tokenData.expires_in
+      }
     });
 
-    // Set cookies with appropriate settings
+    // Set cookies with proper attributes
     response.cookies.set({
       name: 'zoho_access_token',
       value: tokenData.access_token,
@@ -101,7 +100,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log('Cookies Set Successfully');
     return response;
   } catch (error) {
     console.error('Token exchange error:', error);

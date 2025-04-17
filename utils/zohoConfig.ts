@@ -45,49 +45,52 @@ export async function generateZohoTokens(
   const domainKey = location.toUpperCase() as ZohoDomain;
   const baseUrl = ZOHO_DOMAINS[domainKey] || ZOHO_DOMAINS.IN;
   
-  console.log('Token Generation Params:', {
+  console.log('Token Generation Started:', {
     baseUrl,
     location,
-    clientId: ZOHO_CONFIG.CLIENT_ID,
-    redirectUri: ZOHO_CONFIG.REDIRECT_URI
+    code: code.substring(0, 15) + '...'
   });
 
-  const tokenUrl = `${baseUrl}/oauth/v2/token`;
+  // Construct form data exactly as specified in docs
+  const formData = new URLSearchParams();
+  formData.append('grant_type', 'authorization_code');
+  formData.append('client_id', ZOHO_CONFIG.CLIENT_ID);
+  formData.append('client_secret', ZOHO_CONFIG.CLIENT_SECRET);
+  formData.append('redirect_uri', ZOHO_CONFIG.REDIRECT_URI);
+  formData.append('code', code);
 
-  const formData = new URLSearchParams({
-    grant_type: 'authorization_code',
-    client_id: ZOHO_CONFIG.CLIENT_ID,
-    client_secret: ZOHO_CONFIG.CLIENT_SECRET,
-    redirect_uri: ZOHO_CONFIG.REDIRECT_URI,
-    code: code
-  });
-
-  const response = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: formData.toString()
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Token Generation Error:', {
-      status: response.status,
-      statusText: response.statusText,
-      error: errorText
+  try {
+    const response = await fetch(`${baseUrl}/oauth/v2/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: formData.toString()
     });
-    throw new Error(`Token generation failed: ${response.statusText}\n${errorText}`);
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Token Generation Failed:', {
+        status: response.status,
+        error: data
+      });
+      throw new Error(data.error || 'Failed to generate tokens');
+    }
+
+    console.log('Token Generation Success:', {
+      hasAccessToken: !!data.access_token,
+      hasRefreshToken: !!data.refresh_token,
+      expiresIn: data.expires_in,
+      tokenType: data.token_type,
+      apiDomain: data.api_domain
+    });
+
+    return data;
+  } catch (error) {
+    console.error('Token Generation Error:', error);
+    throw error;
   }
-
-  const data = await response.json();
-  console.log('Token Generation Success:', {
-    hasAccessToken: !!data.access_token,
-    hasRefreshToken: !!data.refresh_token,
-    expiresIn: data.expires_in
-  });
-
-  return data;
 }
 
 export type ZohoSessionType = 'rs' | 'dm';
@@ -98,28 +101,28 @@ export interface ZohoSessionResponse {
   status: string;
 }
 
-export async function createZohoSession(
-  accessToken: string,
-  customerEmail?: string,
-  type: ZohoSessionType = 'rs'
-): Promise<ZohoSessionResponse> {
-  const url = new URL('https://assist.zoho.com/api/v2/session');
+// export async function createZohoSession(
+//   accessToken: string,
+//   customerEmail?: string,
+//   type: ZohoSessionType = 'rs'
+// ): Promise<ZohoSessionResponse> {
+//   const url = new URL('https://assist.zoho.com/api/v2/session');
   
-  if (customerEmail) {
-    url.searchParams.append('customer_email', customerEmail);
-  }
-  url.searchParams.append('type', type);
+//   if (customerEmail) {
+//     url.searchParams.append('customer_email', customerEmail);
+//   }
+//   url.searchParams.append('type', type);
 
-  const response = await fetch(url.toString(), {
-    method: 'POST',
-    headers: {
-      'Authorization': `Zoho-oauthtoken ${accessToken}`
-    }
-  });
+//   const response = await fetch(url.toString(), {
+//     method: 'POST',
+//     headers: {
+//       'Authorization': `Zoho-oauthtoken ${accessToken}`
+//     }
+//   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to create Zoho session: ${response.statusText}`);
-  }
+//   if (!response.ok) {
+//     throw new Error(`Failed to create Zoho session: ${response.statusText}`);
+//   }
 
-  return response.json();
-}
+//   return response.json();
+// }
