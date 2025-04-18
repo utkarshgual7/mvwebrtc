@@ -39,10 +39,21 @@ export function getZohoAuthUrl(domain: ZohoDomain = 'US') {
 
 export async function generateZohoTokens(
   code: string,
-  domain: ZohoDomain = 'US'
+  location: string
 ): Promise<ZohoTokenResponse> {
-  const tokenUrl = `${ZOHO_DOMAINS[domain]}/oauth/v2/token`;
+  // Convert location to proper domain key
+  const domainKey = location.toUpperCase() as ZohoDomain;
+  const baseUrl = ZOHO_DOMAINS[domainKey] || ZOHO_DOMAINS.IN;
   
+  console.log('Token Generation Params:', {
+    baseUrl,
+    location,
+    clientId: ZOHO_CONFIG.CLIENT_ID,
+    redirectUri: ZOHO_CONFIG.REDIRECT_URI
+  });
+
+  const tokenUrl = `${baseUrl}/oauth/v2/token`;
+
   const formData = new URLSearchParams({
     grant_type: 'authorization_code',
     client_id: ZOHO_CONFIG.CLIENT_ID,
@@ -56,14 +67,27 @@ export async function generateZohoTokens(
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-    body: formData
+    body: formData.toString()
   });
 
   if (!response.ok) {
-    throw new Error(`Token generation failed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('Token Generation Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorText
+    });
+    throw new Error(`Token generation failed: ${response.statusText}\n${errorText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('Token Generation Success:', {
+    hasAccessToken: !!data.access_token,
+    hasRefreshToken: !!data.refresh_token,
+    expiresIn: data.expires_in
+  });
+
+  return data;
 }
 
 export type ZohoSessionType = 'rs' | 'dm';
