@@ -11,6 +11,10 @@ export default function Success() {
     const authCode = searchParams.get("code");
     const location = searchParams.get("location");
     console.log("Auth Flow Started:", { authCode, location });
+    console.log(" Search Params:", searchParams.toString());
+    console.log("Location:", location); 
+    console.log("Auth Code:", authCode);
+    console.log("Search Params:", searchParams);
 
     if (authCode) {
       const exchangeToken = async () => {

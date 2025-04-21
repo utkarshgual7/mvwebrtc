@@ -35,9 +35,13 @@ export default function ZohoAuthButton() {
       const response = await fetch(`/api/zoho/auth?domain=${domain}`);
       const { authUrl } = await response.json();
       console.log('Opening auth URL:', authUrl);
+      console.log('Zoho auth URL:', authUrl);
+      console.log('success:', response.ok, 'status:', response.status);
+      console.log("authentication successful, opening session modal");
       
       // Open in new tab instead of window
       window.open(authUrl, '_blank');
+      console.log("successfully authenticated with zoho, opening session modal");
     } catch (error) {
       console.error('Zoho auth error:', error);
     } finally {
