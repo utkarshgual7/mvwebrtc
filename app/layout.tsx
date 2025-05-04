@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
+// import { ClerkProvider } from "@clerk/nextjs";
 
 
 import '@stream-io/video-react-sdk/dist/css/styles.css'
@@ -23,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <ClerkProvider
+      {/* <ClerkProvider
       appearance={{
         layout:{
           logoImageUrl:'/icons/mv.svg'
@@ -41,12 +41,12 @@ export default function RootLayout({
 
         }
       }}
-      >
+      > */}
 
       <body className={`${inter.className} bg-dark-2`}>{children}
       
       </body>
-      </ClerkProvider>
+      {/* </ClerkProvider> */}
     </html>
   );
 }

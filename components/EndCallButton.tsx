@@ -1,7 +1,7 @@
 'use client';
 
 import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
-
+import { PhoneOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
 
@@ -31,8 +31,9 @@ const EndCallButton = () => {
   };
 
   return (
-    <Button onClick={endCall} className="bg-red-500">
-      End call for everyone
+    <Button onClick={endCall} className="bg-red-500 hover:bg-red-600">
+      <PhoneOff className="h-4 w-4 md:mr-2" />
+      <span className="hidden md:inline">End call for everyone</span>
     </Button>
   );
 };
