@@ -1,8 +1,9 @@
 export const ZOHO_DOMAINS = {
+  IN: 'https://accounts.zoho.in',
   US: 'https://accounts.zoho.com',
   AU: 'https://accounts.zoho.com.au',
   EU: 'https://accounts.zoho.eu',
-  IN: 'https://accounts.zoho.in',
+
   CN: 'https://accounts.zoho.com.cn',
   JP: 'https://accounts.zoho.jp'
 } as const;

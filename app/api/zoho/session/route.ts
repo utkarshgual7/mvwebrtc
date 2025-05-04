@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sendEmail, generateSessionEmailContent } from '@/utils/emailService';
 
 export async function POST(request: NextRequest) {
   const accessToken = request.cookies.get('zoho_access_token')?.value;
@@ -17,6 +18,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const { customerEmail, type } = await request.json();
+
+    if (!customerEmail || !type) {
+      return NextResponse.json(
+        { error: 'Customer email and session type are required' },
+        { status: 400 }
+      );
+    }
 
     // Create session directly
     const response = await fetch('https://assist.zoho.in/api/v2/session', {
@@ -51,9 +59,26 @@ export async function POST(request: NextRequest) {
       throw new Error(sessionData.error?.message || 'Failed to create session');
     }
 
+    const { customer_url, technician_url } = sessionData.representation;
+
+    // Send email to customer with the customer URL
+    try {
+      const { text, html } = generateSessionEmailContent(customer_url, type);
+      await sendEmail({
+        to: customerEmail,
+        subject: 'Your Zoho Meeting Session is Ready',
+        text,
+        html,
+      });
+    } catch (emailError) {
+      console.error('Failed to send email:', emailError);
+      // Continue with the response even if email fails
+    }
+
     return NextResponse.json({
       success: true,
-      session: sessionData
+      session: sessionData,
+      join_url: technician_url // Return technician URL to open in new tab
     });
 
   } catch (error) {

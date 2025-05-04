@@ -10,10 +10,12 @@ import {
 } from '@/components/ui/select';
 import { ZOHO_DOMAINS, ZohoDomain, ZohoSessionType } from '@/utils/zohoConfig';
 import { ZohoSessionModal } from './ZohoSessionModal';
+import { PinProtectionModal } from './PinProtectionModal';
 
 export default function ZohoAuthButton() {
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
   const [domain, setDomain] = useState<ZohoDomain>('US');
 
   useEffect(() => {
@@ -29,6 +31,10 @@ export default function ZohoAuthButton() {
   }, []);
 
   const handleZohoAuth = async () => {
+    setShowPinModal(true);
+  };
+
+  const handlePinSuccess = async () => {
     setIsLoading(true);
     try {
       console.log('Initiating Zoho authentication...');
@@ -39,7 +45,6 @@ export default function ZohoAuthButton() {
       console.log('success:', response.ok, 'status:', response.status);
       console.log("authentication successful, opening session modal");
       
-      // Open in new tab instead of window
       window.open(authUrl, '_blank');
       console.log("successfully authenticated with zoho, opening session modal");
     } catch (error) {
@@ -101,6 +106,12 @@ export default function ZohoAuthButton() {
           {isLoading ? 'Connecting...' : 'Connect with Zoho'}
         </Button>
       </div>
+
+      <PinProtectionModal
+        isOpen={showPinModal}
+        onClose={() => setShowPinModal(false)}
+        onSuccess={handlePinSuccess}
+      />
 
       <ZohoSessionModal
         isOpen={showModal}
