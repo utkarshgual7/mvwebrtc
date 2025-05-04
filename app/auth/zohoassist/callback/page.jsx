@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function Success() {
+const CallbackContent = () => {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState("Starting authentication...");
 
@@ -12,7 +13,7 @@ export default function Success() {
     const location = searchParams.get("location");
     console.log("Auth Flow Started:", { authCode, location });
     console.log(" Search Params:", searchParams.toString());
-    console.log("Location:", location); 
+    console.log("Location:", location);
     console.log("Auth Code:", authCode);
     console.log("Search Params:", searchParams);
 
@@ -21,14 +22,14 @@ export default function Success() {
         setStatus("Exchanging authorization code for tokens...");
         try {
           console.log("Sending token exchange request...");
-          const response = await fetch('/api/zoho/callback', {
-            method: 'POST',
+          const response = await fetch("/api/zoho/callback", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               code: authCode,
-              location: location || 'in'
+              location: location || "in",
             }),
           });
 
@@ -36,27 +37,30 @@ export default function Success() {
           console.log("Token Exchange Response:", {
             success: data.success,
             hasAccessToken: !!data.accessToken,
-            redirectUrl: data.redirectUrl
+            redirectUrl: data.redirectUrl,
           });
 
           if (response.ok) {
             setStatus("Authentication successful! Closing window...");
             // Post message to parent window and redirect
             if (window.opener) {
-              window.opener.postMessage({ 
-                type: 'ZOHO_AUTH_SUCCESS',
-                success: true 
-              }, '*');
+              window.opener.postMessage(
+                {
+                  type: "ZOHO_AUTH_SUCCESS",
+                  success: true,
+                },
+                "*"
+              );
               window.close();
             } else {
               // If opener is not available, redirect
               window.location.href = data.redirectUrl;
             }
           } else {
-            throw new Error(data.error || 'Token exchange failed');
+            throw new Error(data.error || "Token exchange failed");
           }
         } catch (error) {
-          console.error('Authentication error:', error);
+          console.error("Authentication error:", error);
           setStatus("Authentication failed. Please try again.");
         }
       };
@@ -74,5 +78,24 @@ export default function Success() {
         </p>
       </div>
     </div>
+  );
+};
+
+export default function Success() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-dark-2 p-4">
+          <div className="text-center text-white">
+            <h1 className="text-2xl font-bold mb-4">Loading...</h1>
+            <p className="text-sm text-gray-400">
+              Please wait while we process your authentication.
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <CallbackContent />
+    </Suspense>
   );
 }
